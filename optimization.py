@@ -1,4 +1,9 @@
-# LDC
+# Authors: Alexander Schowtjak, Robin Schulte, Robin Gitschel
+# e-mail: alexander.schowtjak@tu-dortmund.de
+# Creative Commons Attribution 3.0 Unported License.
+
+# You should have received a copy of the license along with this
+# work.  If not, see <http://creativecommons.org/licenses/by/3.0/>.
 
 # -*- coding: utf-8 -*-
 from scipy.optimize import fmin
