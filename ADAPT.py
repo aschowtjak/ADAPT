@@ -112,7 +112,7 @@ idealVector = {'LDC': 907.302196,'strain': 1.879976772186068e-05}
 DataPrec = ''            # set to "double", if double precision is used within Abaqus
 
 # specify your list of abaqus job-names, the postprocessing script (if different from standard) and the required node sets
-JobNames = ['r15']#,'r5'] # uncomment this if two experiments should be used
+JobNames = ['r15'] #,'r5'] # uncomment this if two experiments should be used
 PostProcessingScript = 'getAbqDisp' # post processing script (without file extension)
 NeckNodeSet = 'NSETDISPFIELD' # name of node set in Abaqus to be analyzed, None for all
 ForceSet = 'NSETFORCE' # name of the node set in Abaqus for the force
@@ -139,12 +139,12 @@ DispScale           = 1
 ExpFolder = 'Experimental Results'
 
 # specify the names of your DIC frame data, the number of lines of the header and the quadrant of the DIC-data to use
-FrameLabelsDIC   = ['r15_t2p5_00']#,'r5_t2p5_6'] # labels to identify Aramis frame data. Need to be in same order as jobnames!
+FrameLabelsDIC   = ['r15_t2p5_00'] #,'r5_t2p5_6'] # labels to identify Aramis frame data. Need to be in same order as jobnames!
 DICheaderLines = 4 # number of header lines in DIC-files
-quadrantDIC = {'r15': 3}#,'r5': 3} # specify the qudrant of the DIC-data to use.
+quadrantDIC = {'r15': 3} #,'r5': 3} # specify the qudrant of the DIC-data to use.
 
 # specify your files containing the load-displacement-data
-LabelsLDC = ['LDC_ref.txt']#,'LDC_ref.txt'] # uncomment this if two experiments should be used
+LabelsLDC = ['LDC_ref.txt'] #,'LDC_ref.txt'] # uncomment this if two experiments should be used
 LDCFileDelimiter = ',' # delimiter between the columns in the LDC-file, e.g. ',' or '\t'
 
 # specify the loading directions for the FE and DIC-data
