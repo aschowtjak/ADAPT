@@ -112,7 +112,7 @@ idealVector = {'LDC': 907.302196,'strain': 1.879976772186068e-05}
 DataPrec = ''            # set to "double", if double precision is used within Abaqus
 
 # specify your list of abaqus job-names, the postprocessing script (if different from standard) and the required node sets
-JobNames = ['r15'] #,'r5'] # uncomment this if two experiments should be used
+JobNames = ['r15']#,'r5'] # uncomment this if two experiments should be used
 PostProcessingScript = 'getAbqDisp' # post processing script (without file extension)
 NeckNodeSet = 'NSETDISPFIELD' # name of node set in Abaqus to be analyzed, None for all
 ForceSet = 'NSETFORCE' # name of the node set in Abaqus for the force
@@ -139,12 +139,12 @@ DispScale           = 1
 ExpFolder = 'Experimental Results'
 
 # specify the names of your DIC frame data, the number of lines of the header and the quadrant of the DIC-data to use
-FrameLabelsDIC   = ['r15_t2p5_00'] #,'r5_t2p5_6'] # labels to identify Aramis frame data. Need to be in same order as jobnames!
+FrameLabelsDIC   = ['r15_t2p5_00']#,'r5_t2p5_6'] # labels to identify Aramis frame data. Need to be in same order as jobnames!
 DICheaderLines = 4 # number of header lines in DIC-files
-quadrantDIC = {'r15': 3,'r5': 3} # specify the qudrant of the DIC-data to use.
+quadrantDIC = {'r15': 3}#,'r5': 3} # specify the qudrant of the DIC-data to use.
 
 # specify your files containing the load-displacement-data
-LabelsLDC = ['LDC_ref.txt'] #,'LDC_ref.txt'] # uncomment this if two experiments should be used
+LabelsLDC = ['LDC_ref.txt']#,'LDC_ref.txt'] # uncomment this if two experiments should be used
 LDCFileDelimiter = ',' # delimiter between the columns in the LDC-file, e.g. ',' or '\t'
 
 # specify the loading directions for the FE and DIC-data
@@ -216,29 +216,6 @@ firstRun = True
 
 if colorterm: from colorama import Fore, Back, Style #colored terminal outputs
 
-# create log-file
-RunName = os.path.split(os.getcwd())[-1]
-if os.path.exists(RunName + '_log.txt'):
-    os.remove(RunName + '_log.txt')
-log = open(RunName+'_log.txt', 'w')
-log.write(str(time.strftime("%c")) + ':  # O P T I M I Z A T I O N   S T A R T E D\n')
-StartTime = time.time()
-log.close()
-
-# create iteration-file
-if os.path.exists(RunName + '_iter.txt'):
-    os.remove(RunName + '_iter.txt')
-Iter = open(RunName+'_iter.txt', 'w')
-Iter.write('# Starting vector: ' + str(x0) + '\n')
-Iter.write('# Weighting: ' + str(weighting) + '\tnorm to 1st run value: ' + str(firstRunNorm) + '\n')
-Iter.write('# Iteration \t[Parameter vector]\tObjective function value')
-for job in JobNames:
-    Iter.write('\tf_LDC_'+job)
-for job in JobNames:
-    Iter.write('\tf_DIC_'+job)
-Iter.write('\tCPU time [hhhh:mm:ss]\n')
-Iter.close()
-
 # check operating platform
 Platform = platform.system()
 if Platform == 'Windows':
@@ -292,22 +269,16 @@ TempDir    = cwd + TempFolder   # Directory to TempFolder
 ResDir = cwd+os.path.sep+'Optimization_Results' # Directory to optimization results
 
 # delete old job files and corresponding results while avoiding deletion of other job results
-for idel,ijob in enumerate(JobNames):
-    cJDir = ResDir + os.path.sep + ijob
-    icount = 0
-    if os.path.exists(cJDir):
-        while os.path.exists(cJDir):
-            icount += 1
-            sicount = str(icount)
-            if os.path.exists(cJDir):
-                cJDir = ResDir+os.path.sep+ijob+os.path.sep+sicount
-                GraphDir = cJDir+os.path.sep+'FrameGraphs'
-                LdcDir = cJDir+os.path.sep+'LDCplots'
-    else:
-        cJDir = cJDir+os.path.sep+str(icount)
-        GraphDir = cJDir+os.path.sep+'FrameGraphs'
-        LdcDir = cJDir+os.path.sep+'LDCplots'
-    ResDir = cJDir
+icount = 0
+tResDir = ResDir +os.path.sep+str(icount)
+if os.path.exists(tResDir):
+    while os.path.exists(tResDir):
+        icount += 1
+        if os.path.exists(tResDir):
+            tResDir = ResDir+os.path.sep+str(icount)
+ResDir = tResDir
+GraphDir = ResDir+os.path.sep+'FrameGraphs'
+LdcDir = ResDir+os.path.sep+'LDCplots'
 if not noAbaqus:
     if os.path.exists(TempDir):
         for idel,ijob in enumerate(JobNames):
@@ -1186,7 +1157,10 @@ def Optimfunc(x,*bounds):
     fQOI = defaultdict(dict)
 
     # initialize storage for frame data
-    if interonce and firstRun: uxOutlist, uyOutlist, uzOutlist, eps11Outlist, eps22Outlist = [], [], [], [], []
+    if interonce and firstRun:
+        uxOutlist, uyOutlist, uzOutlist, eps11Outlist, eps22Outlist = {}, {}, {}, {}, {}
+        for job in JobNames:
+            uxOutlist[job], uyOutlist[job], uzOutlist[job], eps11Outlist[job], eps22Outlist[job] = [], [], [], [], []
     if interonce == True and firstRun == False:
         feIn,feInElem = {},{}
         for job in JobNames:
@@ -1447,22 +1421,22 @@ def Optimfunc(x,*bounds):
                                 uyOut = [uy1*T1 + uy2*T2 for uy1,uy2 in zip(uyOut1,uyOut2)]
                                 uzOut = [uz1*T1 + uz2*T2 for uz1,uz2 in zip(uzOut1,uzOut2)]
                                 if interonce:
-                                    uxOutlist.append(uxOut)
-                                    uyOutlist.append(uyOut)
-                                    uzOutlist.append(uzOut)
+                                    uxOutlist[job].append(uxOut)
+                                    uyOutlist[job].append(uyOut)
+                                    uzOutlist[job].append(uzOut)
                             elif 'strain' in weighting:
                                 eps11Out = [eps1*T1 + eps2*T2 for eps1,eps2 in zip(eps11Out1,eps11Out2)]
                                 eps22Out = [eps1*T1 + eps2*T2 for eps1,eps2 in zip(eps22Out1,eps22Out2)]
                                 if interonce:
-                                    eps11Outlist.append(eps11Out)
-                                    eps22Outlist.append(eps22Out)
+                                    eps11Outlist[job].append(eps11Out)
+                                    eps22Outlist[job].append(eps22Out)
                         else:
                             if 'displacement' in weighting:
-                                uxOut = uxOutlist[frCount]
-                                uyOut = uyOutlist[frCount]
+                                uxOut = uxOutlist[job][frCount]
+                                uyOut = uyOutlist[job][frCount]
                             elif 'strain' in weighting:
-                                eps11Out = eps11Outlist[frCount]
-                                eps22Out = eps22Outlist[frCount]
+                                eps11Out = eps11Outlist[job][frCount]
+                                eps22Out = eps22Outlist[job][frCount]
                             
                         # scatter plot for last frame
                         if 'displacement' in weighting and DisableAllGraphs == False:
@@ -1555,7 +1529,7 @@ def Optimfunc(x,*bounds):
                         if 'displacement' in weighting:
                             # concatenate lists of x- and y-displacements
                             ExpObjectiveInterList = np.array(uxOut+uyOut)
-                            FeObjectiveList = np.array(frame['ux']+frame['uy'])
+                            FeObjectiveList = np.array(feDat1+feDat2)
                             
                         if 'strain' in weighting:
                             # concatenate lists of x- and y-strains
@@ -2251,8 +2225,8 @@ def UpdateIterfile(x,f,xfQOI,niter):
     '''
     
     # create iter file if not existing already
-    if not os.path.exists(cwd + os.path.sep + RunName+'_iter.txt'):
-        Iter = open(cwd + os.path.sep + RunName+'_iter.txt', 'w')
+    if not os.path.exists(ResDir + os.path.sep + RunName+'_iter.txt'):
+        Iter = open(ResDir + os.path.sep + RunName+'_iter.txt', 'w')
         Iter.write('# Starting vector: ' + str(x0) + '\n')
         Iter.write('# Weighting: ' + str(weighting) + '\tnorm to 1st run value: ' + str(firstRunNorm) + '\n')
         Iter.write('# Iteration \t[Parameter vector]\tObjective function value')
@@ -2263,7 +2237,7 @@ def UpdateIterfile(x,f,xfQOI,niter):
         Iter.close()
     
     # update log-file: parameter vector, objective function value, CPU time
-    Iter = open(cwd + os.path.sep + RunName+'_iter.txt', 'a+')
+    Iter = open(ResDir + os.path.sep + RunName+'_iter.txt', 'a+')
     t = (time.time()-StartTime)
     h = int(t/60/60)                # hours
     m = int(t/60 - h*60)            # minutes
@@ -2296,7 +2270,7 @@ def UpdateLogfile(message):
         Message to be written into the log file
     '''
     
-    log = open(cwd + os.path.sep + RunName+'_log.txt', 'a+')
+    log = open(ResDir + os.path.sep + RunName+'_log.txt', 'a+')
     log.write( str(time.strftime("%c")) + ':  ' + message + '\n')
     log.close()
  
@@ -2411,6 +2385,40 @@ if __name__ == '__main__':
         # vector containing the objective function values of specific qunatities of interest
         fQOIvec = []    
         
+        # create folder structure
+        directories = (GetDirs(JobNames))
+        # create folder, if it does not exist already
+        makeDirList = [TempDir,ResDir,GraphDir,LdcDir]
+        for job in JobNames:
+            makeDirList.append(os.path.join(os.path.join(TempDir,job),RawDir))
+        
+        for dirName in makeDirList:
+            if not os.path.exists(dirName):
+                os.makedirs(dirName)
+                 
+        # create log-file
+        RunName = os.path.split(os.getcwd())[-1]
+        if os.path.exists(ResDir+os.path.sep+RunName+'_log.txt'):
+            os.remove(ResDir+os.path.sep+RunName+'_log.txt')
+        log = open(ResDir+os.path.sep+RunName+'_log.txt', 'w')
+        log.write(str(time.strftime("%c")) + ':  # O P T I M I Z A T I O N   S T A R T E D\n')
+        StartTime = time.time()
+        log.close()
+        
+        # create iteration-file
+        if os.path.exists(ResDir+os.path.sep+RunName+'_iter.txt'):
+            os.remove(ResDir+os.path.sep+RunName+'_iter.txt')
+        Iter = open(ResDir+os.path.sep+RunName+'_iter.txt', 'w')
+        Iter.write('# Starting vector: ' + str(x0) + '\n')
+        Iter.write('# Weighting: ' + str(weighting) + '\tnorm to 1st run value: ' + str(firstRunNorm) + '\n')
+        Iter.write('# Iteration \t[Parameter vector]\tObjective function value')
+        for job in JobNames:
+            Iter.write('\tf_LDC_'+job)
+        for job in JobNames:
+            Iter.write('\tf_DIC_'+job)
+        Iter.write('\tCPU time [hhhh:mm:ss]\n')
+        Iter.close()
+        
         # check for restart file
         if not restartFile == None:
             try:
@@ -2423,17 +2431,6 @@ if __name__ == '__main__':
                 message = 'Specified restart file not found! Beginning optimisation, starting from inital guess.'
                 SendWarning(message)
         
-        # create folder structure
-        directories = (GetDirs(JobNames))
-        # create folder, if it does not exist already
-        makeDirList = [TempDir,ResDir,GraphDir,LdcDir]
-        for job in JobNames:
-            makeDirList.append(os.path.join(os.path.join(TempDir,job),RawDir))
-        
-        for dirName in makeDirList:
-            if not os.path.exists(dirName):
-                os.makedirs(dirName)
-                 
         # copy files to temp directory
         for i,job in enumerate(JobNames):
             os.chdir(directories[job])
